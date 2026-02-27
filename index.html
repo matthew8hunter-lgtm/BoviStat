@@ -1,21 +1,258 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>BoviStat</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0f0f14;
-      color: white;
-      text-align: center;
-      padding: 100px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BoviStat — North American Show Cattle Leaderboard</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Inter:wght@300;400;500;600&display=swap');
+
+body { margin:0; font-family:'Inter',sans-serif; background:#0f0f14; color:#f5f5f5; }
+h1,h2,h3 { font-family:'Montserrat',sans-serif; letter-spacing:0.5px; }
+section { padding:70px 20px; }
+.container { max-width:1200px; margin:auto; }
+header { background:#111; border-bottom:2px solid #6e0f1f; position:sticky; top:0; z-index:1000; }
+.nav { display:flex; justify-content:space-between; align-items:center; padding:18px 20px; }
+.logo { font-size:28px; }
+.logo .bold { font-weight:700; }
+.logo .light { font-weight:400; }
+.nav-links { display:flex; align-items:center; }
+.nav a { margin-left:25px; text-decoration:none; color:#cccccc; font-weight:500; transition:0.3s; cursor:pointer; }
+.nav a:hover { color:#8b1c2d; }
+.nav .nav-account-btn { margin-left:25px; padding:8px 18px; background:#6e0f1f; color:#fff; border-radius:4px; font-weight:600; }
+.nav .nav-account-btn:hover { background:#8b1c2d; }
+
+.hero { background:linear-gradient(135deg,#1a1a1f,#0f0f14); text-align:center; padding:120px 20px; }
+.hero h1 { font-size:48px; margin-bottom:20px; }
+.hero p { font-size:18px; margin-bottom:30px; color:#cfcfcf; max-width:700px; margin-left:auto; margin-right:auto; }
+.search-box input { padding:14px; width:300px; border-radius:4px; border:1px solid #333; background:#1a1a1f; color:white; }
+.search-box button { padding:14px 20px; border-radius:4px; border:none; background:#8b1c2d; color:white; margin-left:10px; cursor:pointer; font-weight:500; }
+.search-box button:hover { background:#a32337; }
+.search-result { margin-top:25px; font-size:16px; color:#8b1c2d; }
+
+/* Leaderboard */
+.leaderboard { background:#141418; }
+.leaderboard-table { width:100%; border-collapse:collapse; margin-top:40px; }
+.leaderboard-table th, .leaderboard-table td { padding:14px; text-align:left; border-bottom:1px solid #2a2a30; }
+.leaderboard-table th { color:#aaa; font-weight:500; }
+.leaderboard-table tr:hover { background:#1c1c22; }
+.rank { font-weight:700; color:#8b1c2d; }
+
+.badge { background:#6e0f1f; padding:4px 10px; border-radius:4px; font-size:12px; }
+
+.stats { background:#6e0f1f; color:white; text-align:center; }
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:30px; margin-top:40px; }
+.stat { font-size:32px; font-weight:700; }
+.stat-label { font-size:14px; opacity:0.9; }
+
+footer { background:#0b0b0f; color:#aaa; text-align:center; padding:40px 20px; border-top:2px solid #6e0f1f; }
+footer h3 { color:#fff; }
+
+@media(max-width:768px){
+.hero h1{font-size:34px}
+.search-box input{width:100%;margin-bottom:10px}
+.search-box button{width:100%;margin-left:0;margin-top:10px}
+}
+</style>
 </head>
 <body>
-  <h1>BoviStat</h1>
-  <p>Western Canada's Show Cattle Leaderboard</p>
+
+<header>
+  <div class="nav container">
+    <div class="logo"><span class="bold">Bovi</span><span class="light">Stat</span></div>
+    <div class="nav-links" id="navLinks">
+      <a onclick="scrollToSection('homeSection')">Home</a>
+      <a onclick="scrollToSection('leaderboardSection')">Leaderboard</a>
+      <a onclick="scrollToSection('statsSection')">Stats</a>
+      <a class="nav-account-btn">Early Access</a>
+    </div>
+  </div>
+</header>
+
+<section class="hero" id="homeSection">
+  <div class="container">
+    <h1>North America's Show Cattle Leaderboard</h1>
+    <p>The first centralized competitive ranking platform for show cattle. Track results, compare performance, and fuel the drive to win.</p>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search Cow, Breeder, or Show">
+      <button onclick="searchCow()">Search</button>
+    </div>
+    <div class="search-result" id="searchResult"></div>
+  </div>
+</section>
+
+<section class="leaderboard" id="leaderboardSection">
+  <div class="container">
+    <h2>🔥 Leaderboards</h2>
+
+    <!-- Leaderboard Controls -->
+    <div style="display:flex;flex-wrap:wrap;gap:15px;margin-top:25px;">
+      <select style="padding:10px;background:#1a1a1f;color:white;border:1px solid #333;border-radius:4px;">
+        <option>National</option>
+        <option>Canada</option>
+        <option>United States</option>
+      </select>
+      <select style="padding:10px;background:#1a1a1f;color:white;border:1px solid #333;border-radius:4px;">
+        <option>All Provinces / States</option>
+        <option>Alberta</option>
+        <option>Saskatchewan</option>
+        <option>Texas</option>
+        <option>Iowa</option>
+      </select>
+      <select style="padding:10px;background:#1a1a1f;color:white;border:1px solid #333;border-radius:4px;">
+        <option>All Breeds</option>
+        <option>Angus</option>
+        <option>Simmental</option>
+        <option>Hereford</option>
+      </select>
+      <select style="padding:10px;background:#1a1a1f;color:white;border:1px solid #333;border-radius:4px;">
+        <option>Junior Division</option>
+        <option>Open Division</option>
+      </select>
+      <select style="padding:10px;background:#1a1a1f;color:white;border:1px solid #333;border-radius:4px;">
+        <option>This Year</option>
+        <option>5 Year</option>
+        <option>All-Time</option>
+      </select>
+    </div>
+
+    <!-- Podium Top 3 -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:25px;margin-top:40px;">
+      <div style="background:#1c1c22;padding:25px;border-radius:8px;text-align:center;border:2px solid #8b1c2d;">
+        <h3>🥇 #1 Iron Lady 742</h3>
+        <p>Angus • Summit Genetics</p>
+        <p><strong>1,250 Points</strong></p>
+        <span class="badge">Grand Champion x4</span>
+      </div>
+      <div style="background:#1c1c22;padding:25px;border-radius:8px;text-align:center;">
+        <h3>🥈 #2 Red Thunder 18K</h3>
+        <p>Simmental • Prairie Ridge</p>
+        <p><strong>1,110 Points</strong></p>
+        <span class="badge">Reserve x3</span>
+      </div>
+      <div style="background:#1c1c22;padding:25px;border-radius:8px;text-align:center;">
+        <h3>🥉 #3 Midnight Rose</h3>
+        <p>Hereford • Highline Farms</p>
+        <p><strong>980 Points</strong></p>
+        <span class="badge">Grand x2</span>
+      </div>
+    </div>
+
+    <!-- Full Rankings Table -->
+    <table class="leaderboard-table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Exhibitor</th>
+          <th>Province/State</th>
+          <th>Breed</th>
+          <th>Points</th>
+          <th>Titles</th>
+          <th>Change</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="rank">#4</td>
+          <td>Blake Jensen</td>
+          <td>Alberta</td>
+          <td>Angus</td>
+          <td>920</td>
+          <td><span class="badge">2x Grand</span></td>
+          <td style="color:#4caf50;">▲ +2</td>
+        </tr>
+        <tr>
+          <td class="rank">#5</td>
+          <td>Harper Collins</td>
+          <td>Texas</td>
+          <td>Simmental</td>
+          <td>880</td>
+          <td><span class="badge">3x Reserve</span></td>
+          <td style="color:#f44336;">▼ -1</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Provincial Spotlight -->
+    <div style="margin-top:60px;">
+      <h3>🇨🇦 Alberta Provincial Leaders</h3>
+      <p style="color:#bbb;">Top competitors within Alberta for the selected division.</p>
+      <table class="leaderboard-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Exhibitor</th>
+            <th>Points</th>
+            <th>Badge</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rank">#1</td>
+            <td>Blake Jensen</td>
+            <td>920</td>
+            <td><span class="badge">Provincial Champion</span></td>
+          </tr>
+          <tr>
+            <td class="rank">#2</td>
+            <td>Mason Reid</td>
+            <td>870</td>
+            <td><span class="badge">Top 3 Alberta</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</section>
+
+<section class="stats" id="statsSection">
+  <div class="container">
+    <h2>BoviStat Competitive Index</h2>
+    <div class="stat-grid">
+      <div><div class="stat" data-target="250">0</div><div class="stat-label">Shows Tracked</div></div>
+      <div><div class="stat" data-target="5400">0</div><div class="stat-label">Show Cattle Ranked</div></div>
+      <div><div class="stat" data-target="1200">0</div><div class="stat-label">Breeders Competing</div></div>
+      <div><div class="stat" data-target="32000">0</div><div class="stat-label">Results Logged</div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <h3>BoviStat</h3>
+  <p>Fueling the Competitive Edge in Show Cattle.</p>
+  <p>© 2026 BoviStat. All rights reserved.</p>
+</footer>
+
+<script>
+function searchCow(){
+  const query=document.getElementById('searchInput').value;
+  const result=document.getElementById('searchResult');
+  if(query){
+    result.innerHTML=`Showing leaderboard and performance preview for <strong>${query}</strong>`;
+  }
+}
+
+function scrollToSection(id){
+  document.getElementById(id).scrollIntoView({behavior:'smooth'});
+}
+
+// Animated Counters
+const counters=document.querySelectorAll('.stat');
+counters.forEach(counter=>{
+  const update=()=>{
+    const target=+counter.getAttribute('data-target');
+    const count=+counter.innerText;
+    const increment=target/100;
+    if(count<target){
+      counter.innerText=Math.ceil(count+increment);
+      setTimeout(update,20);
+    } else { counter.innerText=target.toLocaleString(); }
+  };
+  update();
+});
+</script>
+
 </body>
 </html>
