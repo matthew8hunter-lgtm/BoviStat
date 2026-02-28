@@ -49,6 +49,21 @@ header { background:#111; border-bottom:2px solid #6e0f1f; position:sticky; top:
 footer { background:#0b0b0f; color:#aaa; text-align:center; padding:40px 20px; border-top:2px solid #6e0f1f; }
 footer h3 { color:#fff; }
 
+.footer-links {
+  margin: 15px 0;
+}
+
+.footer-links a {
+  color: #aaa;
+  text-decoration: none;
+  margin: 0 12px;
+  transition: 0.3s ease;
+}
+
+.footer-links a:hover {
+  color: #ffffff;
+}
+
 @media(max-width:768px){
 .hero h1{font-size:34px}
 .search-box input{width:100%;margin-bottom:10px}
@@ -223,10 +238,10 @@ footer h3 { color:#fff; }
   <h3>BoviStat</h3>
   <p>Fueling the Competitive Edge in Show Cattle.</p>
 
-  <div style="margin:15px 0;">
-    <a href="/privacy.html" style="color:#aaa;text-decoration:none;margin:0 10px;">Privacy Policy</a>
-    <a href="/terms.html" style="color:#aaa;text-decoration:none;margin:0 10px;">Terms of Use</a>
-    <a href="/contact.html" style="color:#aaa;text-decoration:none;margin:0 10px;">Contact</a>
+  <div class="footer-links">
+    <a href="/privacy.html">Privacy Policy</a>
+    <a href="/terms.html">Terms of Use</a>
+    <a href="/contact.html">Contact</a>
   </div>
 
   <p>© 2026 BoviStat. All rights reserved.</p>
