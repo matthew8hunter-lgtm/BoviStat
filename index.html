@@ -248,33 +248,7 @@ footer h3 { color:#fff; }
 </footer>
 
 <script>
-function searchCow(){
-  const query=document.getElementById('searchInput').value;
-  const result=document.getElementById('searchResult');
-  if(query){
-    result.innerHTML=`Showing leaderboard and performance preview for <strong>${query}</strong>`;
-  }
-}
-
-function scrollToSection(id){
-  document.getElementById(id).scrollIntoView({behavior:'smooth'});
-}
-
-// Animated Counters
-const counters=document.querySelectorAll('.stat');
-counters.forEach(counter=>{
-  const update=()=>{
-    const target=+counter.getAttribute('data-target');
-    const count=+counter.innerText;
-    const increment=target/100;
-    if(count<target){
-      counter.innerText=Math.ceil(count+increment);
-      setTimeout(update,20);
-    } else { counter.innerText=target.toLocaleString(); }
-  };
-  update();
-});
-const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRqHWTRVEeDEYFdKdy6WIvQM4gSvdFJAP07kq5bAkIjM1NU8EpnvgcbzFYSsn2FheLk_xXaH-EC3Z75/pubhtml?gid=0&single=true";
+  const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRqHWTRVEeDEYFdKdy6WIvQM4gSvdFJAP07kq5bAkIjM1NU8EpnvgcbzFYSsn2FheLk_xXaH-EC3Z75/pubhtml?gid=0&single=true";
 
 // --- CSV parsing (simple + reliable for basic sheets) ---
 function parseCSV(csvText) {
@@ -353,6 +327,33 @@ async function loadLeaderboardFromSheet() {
 
 // Load on page start
 document.addEventListener("DOMContentLoaded", loadLeaderboardFromSheet);
+function searchCow(){
+  const query=document.getElementById('searchInput').value;
+  const result=document.getElementById('searchResult');
+  if(query){
+    result.innerHTML=`Showing leaderboard and performance preview for <strong>${query}</strong>`;
+  }
+}
+
+function scrollToSection(id){
+  document.getElementById(id).scrollIntoView({behavior:'smooth'});
+}
+
+// Animated Counters
+const counters=document.querySelectorAll('.stat');
+counters.forEach(counter=>{
+  const update=()=>{
+    const target=+counter.getAttribute('data-target');
+    const count=+counter.innerText;
+    const increment=target/100;
+    if(count<target){
+      counter.innerText=Math.ceil(count+increment);
+      setTimeout(update,20);
+    } else { counter.innerText=target.toLocaleString(); }
+  };
+  update();
+});
+
 </script>
 
 </body>
