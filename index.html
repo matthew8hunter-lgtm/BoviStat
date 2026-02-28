@@ -274,6 +274,85 @@ counters.forEach(counter=>{
   };
   update();
 });
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRqHWTRVEeDEYFdKdy6WIvQM4gSvdFJAP07kq5bAkIjM1NU8EpnvgcbzFYSsn2FheLk_xXaH-EC3Z75/pubhtml?gid=0&single=true";
+
+// --- CSV parsing (simple + reliable for basic sheets) ---
+function parseCSV(csvText) {
+  const lines = csvText.trim().split(/\r?\n/);
+  const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+
+  return lines.slice(1).map(line => {
+    // handles basic CSV; avoid commas inside cells for this MVP
+    const values = line.split(",").map(v => v.trim());
+    const row = {};
+    headers.forEach((h, i) => (row[h] = values[i] ?? ""));
+    return row;
+  });
+}
+
+function safeNumber(x) {
+  const n = Number(String(x).replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function renderLeaderboardTable(rows) {
+  const tbody = document.querySelector(".leaderboard-table tbody");
+  if (!tbody) return;
+
+  // Clear existing rows
+  tbody.innerHTML = "";
+
+  rows.forEach(r => {
+    const rankNum = safeNumber(r.rank);
+    const changeText = (r.change ?? "").toString();
+    const changeVal = safeNumber(changeText);
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td class="rank">#${rankNum}</td>
+      <td>${r.exhibitor ?? ""}</td>
+      <td>${r.region ?? ""}</td>
+      <td>${r.breed ?? ""}</td>
+      <td>${safeNumber(r.points).toLocaleString()}</td>
+      <td><span class="badge">${r.titles ?? ""}</span></td>
+      <td style="color:${changeVal >= 0 ? "#4caf50" : "#f44336"};">
+        ${changeVal >= 0 ? "▲" : "▼"} ${changeText}
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+async function loadLeaderboardFromSheet() {
+  try {
+    const res = await fetch(SHEET_CSV_URL, { cache: "no-store" });
+    if (!res.ok) throw new Error("Failed to fetch sheet CSV");
+
+    const csvText = await res.text();
+    const rows = parseCSV(csvText)
+      .filter(r => r.rank && r.exhibitor) // basic sanity
+      .sort((a, b) => safeNumber(a.rank) - safeNumber(b.rank));
+
+    renderLeaderboardTable(rows);
+
+    // Optional: update the top-3 podium cards if you want next.
+    // We'll do that after you confirm the table is working.
+
+  } catch (err) {
+    console.error(err);
+    const tbody = document.querySelector(".leaderboard-table tbody");
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="7" style="color:#f44336;padding:16px;">
+        Could not load leaderboard data. Check your Google Sheet publish link.
+      </td></tr>`;
+    }
+  }
+}
+
+// Load on page start
+document.addEventListener("DOMContentLoaded", loadLeaderboardFromSheet);
 </script>
 
 </body>
