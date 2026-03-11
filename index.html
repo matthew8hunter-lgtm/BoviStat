@@ -133,26 +133,7 @@ footer h3 { color:#fff; }
     </div>
 
     <!-- Podium Top 3 -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:25px;margin-top:40px;">
-      <div style="background:#1c1c22;padding:25px;border-radius:8px;text-align:center;border:2px solid #8b1c2d;">
-        <h3>🥇 #1 Iron Lady 742</h3>
-        <p>Angus • Summit Genetics</p>
-        <p><strong>1,250 Points</strong></p>
-        <span class="badge">Grand Champion x4</span>
-      </div>
-      <div style="background:#1c1c22;padding:25px;border-radius:8px;text-align:center;">
-        <h3>🥈 #2 Red Thunder 18K</h3>
-        <p>Simmental • Prairie Ridge</p>
-        <p><strong>1,110 Points</strong></p>
-        <span class="badge">Reserve x3</span>
-      </div>
-      <div style="background:#1c1c22;padding:25px;border-radius:8px;text-align:center;">
-        <h3>🥉 #3 Midnight Rose</h3>
-        <p>Hereford • Highline Farms</p>
-        <p><strong>980 Points</strong></p>
-        <span class="badge">Grand x2</span>
-      </div>
-    </div>
+    <div id="podiumGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:25px;margin-top:40px;"></div>
 
     <!-- Full Rankings Table -->
     <table class="leaderboard-table">
@@ -263,6 +244,87 @@ function parseCSV(csvText) {
     return row;
   });
 }
+
+function renderLeaderboardTable(rows) {
+  const tbody = document.querySelector(".leaderboard-table tbody");
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+
+  rows.forEach(r => {
+    const rankNum = Number(r.rank) || 0;
+    const pointsNum = Number(r.points) || 0;
+    const changeNum = Number(r.change) || 0;
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td class="rank">#${rankNum}</td>
+      <td>${r.exhibitor || ""}</td>
+      <td>${r.region || ""}</td>
+      <td>${r.breed || ""}</td>
+      <td>${pointsNum.toLocaleString()}</td>
+      <td><span class="badge">${r.titles || ""}</span></td>
+      <td style="color:${changeNum >= 0 ? "#4caf50" : "#f44336"};">
+        ${changeNum >= 0 ? "▲" : "▼"} ${Math.abs(changeNum)}
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+function renderPodium(rows) {
+  const podium = document.getElementById("podiumGrid");
+  if (!podium) return;
+
+  podium.innerHTML = "";
+
+  const medals = ["🥇", "🥈", "🥉"];
+  const top3 = rows.slice(0, 3);
+
+  top3.forEach((r, i) => {
+    const card = document.createElement("div");
+
+    card.style.background = "#1c1c22";
+    card.style.padding = "25px";
+    card.style.borderRadius = "8px";
+    card.style.textAlign = "center";
+
+    if (i === 0) {
+      card.style.border = "2px solid #8b1c2d";
+    }
+
+    card.innerHTML = `
+      <h3>${medals[i]} #${r.rank} ${r.exhibitor}</h3>
+      <p>${r.breed} • ${r.region}</p>
+      <p><strong>${Number(r.points).toLocaleString()} Points</strong></p>
+      <span class="badge">${r.titles || ""}</span>
+    `;
+
+    podium.appendChild(card);
+  });
+}
+
+async function loadLeaderboardFromSheet() {
+  try {
+    const response = await fetch(SHEET_CSV_URL, { cache: "no-store" });
+    const csvText = await response.text();
+
+    const rows = parseCSV(csvText)
+      .filter(r => r.rank && r.exhibitor)
+      .sort((a, b) => Number(a.rank) - Number(b.rank));
+
+    renderLeaderboardTable(rows);
+    renderPodium(rows);
+  } catch (error) {
+    console.error("Error loading leaderboard:", error);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", loadLeaderboardFromSheet);
+
+
 
 function safeNumber(x) {
   const n = Number(String(x).replace(/[^0-9.-]/g, ""));
