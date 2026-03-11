@@ -210,7 +210,7 @@ footer h3 { color:#fff; }
 </footer>
 
 <script>
-  const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRqHWTRVEeDEYFdKdy6WIvQM4gSvdFJAP07kq5bAkIjM1NU8EpnvgcbzFYSsn2FheLk_xXaH-EC3Z75/pub?gid=0&single=true&output=csv';
+const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRqHWTRVEeDEYFdKdy6WIvQM4gSvdFJAP07kq5bAkIjM1NU8EpnvgcbzFYSsn2FheLk_xXaH-EC3Z75/pub?gid=0&single=true&output=csv';
 
 // --- CSV parsing (simple + reliable for basic sheets) ---
 function parseCSV(csvText) {
@@ -218,12 +218,16 @@ function parseCSV(csvText) {
   const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
 
   return lines.slice(1).map(line => {
-    // handles basic CSV; avoid commas inside cells for this MVP
     const values = line.split(",").map(v => v.trim());
     const row = {};
     headers.forEach((h, i) => (row[h] = values[i] ?? ""));
     return row;
   });
+}
+
+function safeNumber(x) {
+  const n = Number(String(x).replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(n) ? n : 0;
 }
 
 function renderLeaderboardTable(rows) {
@@ -233,21 +237,22 @@ function renderLeaderboardTable(rows) {
   tbody.innerHTML = "";
 
   rows.forEach(r => {
-    const rankNum = Number(r.rank) || 0;
-    const pointsNum = Number(r.points) || 0;
-    const changeNum = Number(r.change) || 0;
+    const rankNum = safeNumber(r.rank);
+    const pointsNum = safeNumber(r.points);
+    const changeText = (r.change ?? "").toString();
+    const changeVal = safeNumber(changeText);
 
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
       <td class="rank">#${rankNum}</td>
-      <td>${r.exhibitor || ""}</td>
-      <td>${r.region || ""}</td>
-      <td>${r.breed || ""}</td>
+      <td>${r.exhibitor ?? ""}</td>
+      <td>${r.region ?? ""}</td>
+      <td>${r.breed ?? ""}</td>
       <td>${pointsNum.toLocaleString()}</td>
-      <td><span class="badge">${r.titles || ""}</span></td>
-      <td style="color:${changeNum >= 0 ? "#4caf50" : "#f44336"};">
-        ${changeNum >= 0 ? "▲" : "▼"} ${Math.abs(changeNum)}
+      <td><span class="badge">${r.titles ?? ""}</span></td>
+      <td style="color:${changeVal >= 0 ? "#4caf50" : "#f44336"};">
+        ${changeVal >= 0 ? "▲" : "▼"} ${Math.abs(changeVal)}
       </td>
     `;
 
@@ -279,66 +284,11 @@ function renderPodium(rows) {
     card.innerHTML = `
       <h3>${medals[i]} #${r.rank} ${r.exhibitor}</h3>
       <p>${r.breed} • ${r.region}</p>
-      <p><strong>${Number(r.points).toLocaleString()} Points</strong></p>
-      <span class="badge">${r.titles || ""}</span>
+      <p><strong>${safeNumber(r.points).toLocaleString()} Points</strong></p>
+      <span class="badge">${r.titles ?? ""}</span>
     `;
 
     podium.appendChild(card);
-  });
-}
-
-async function loadLeaderboardFromSheet() {
-  try {
-    const response = await fetch(SHEET_CSV_URL, { cache: "no-store" });
-    const csvText = await response.text();
-
-    const rows = parseCSV(csvText)
-      .filter(r => r.rank && r.exhibitor)
-      .sort((a, b) => Number(a.rank) - Number(b.rank));
-
-    renderLeaderboardTable(rows);
-    renderPodium(rows);
-  } catch (error) {
-    console.error("Error loading leaderboard:", error);
-  }
-}
-
-document.addEventListener("DOMContentLoaded", loadLeaderboardFromSheet);
-
-
-
-function safeNumber(x) {
-  const n = Number(String(x).replace(/[^0-9.-]/g, ""));
-  return Number.isFinite(n) ? n : 0;
-}
-
-function renderLeaderboardTable(rows) {
-  const tbody = document.querySelector(".leaderboard-table tbody");
-  if (!tbody) return;
-
-  // Clear existing rows
-  tbody.innerHTML = "";
-
-  rows.forEach(r => {
-    const rankNum = safeNumber(r.rank);
-    const changeText = (r.change ?? "").toString();
-    const changeVal = safeNumber(changeText);
-
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td class="rank">#${rankNum}</td>
-      <td>${r.exhibitor ?? ""}</td>
-      <td>${r.region ?? ""}</td>
-      <td>${r.breed ?? ""}</td>
-      <td>${safeNumber(r.points).toLocaleString()}</td>
-      <td><span class="badge">${r.titles ?? ""}</span></td>
-      <td style="color:${changeVal >= 0 ? "#4caf50" : "#f44336"};">
-        ${changeVal >= 0 ? "▲" : "▼"} ${changeText}
-      </td>
-    `;
-
-    tbody.appendChild(tr);
   });
 }
 
@@ -349,16 +299,14 @@ async function loadLeaderboardFromSheet() {
 
     const csvText = await res.text();
     const rows = parseCSV(csvText)
-      .filter(r => r.rank && r.exhibitor) // basic sanity
+      .filter(r => r.rank && r.exhibitor)
       .sort((a, b) => safeNumber(a.rank) - safeNumber(b.rank));
 
     renderLeaderboardTable(rows);
-
-    // Optional: update the top-3 podium cards if you want next.
-    // We'll do that after you confirm the table is working.
-
+    renderPodium(rows);
   } catch (err) {
-    console.error(err);
+    console.error("Error loading leaderboard:", err);
+
     const tbody = document.querySelector(".leaderboard-table tbody");
     if (tbody) {
       tbody.innerHTML = `<tr><td colspan="7" style="color:#f44336;padding:16px;">
@@ -368,35 +316,37 @@ async function loadLeaderboardFromSheet() {
   }
 }
 
-// Load on page start
-document.addEventListener("DOMContentLoaded", loadLeaderboardFromSheet);
-function searchCow(){
-  const query=document.getElementById('searchInput').value;
-  const result=document.getElementById('searchResult');
-  if(query){
-    result.innerHTML=`Showing leaderboard and performance preview for <strong>${query}</strong>`;
+function searchCow() {
+  const query = document.getElementById('searchInput').value;
+  const result = document.getElementById('searchResult');
+  if (query) {
+    result.innerHTML = `Showing leaderboard and performance preview for <strong>${query}</strong>`;
   }
 }
 
-function scrollToSection(id){
-  document.getElementById(id).scrollIntoView({behavior:'smooth'});
+function scrollToSection(id) {
+  document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
 }
 
 // Animated Counters
-const counters=document.querySelectorAll('.stat');
-counters.forEach(counter=>{
-  const update=()=>{
-    const target=+counter.getAttribute('data-target');
-    const count=+counter.innerText;
-    const increment=target/100;
-    if(count<target){
-      counter.innerText=Math.ceil(count+increment);
-      setTimeout(update,20);
-    } else { counter.innerText=target.toLocaleString(); }
+const counters = document.querySelectorAll('.stat');
+counters.forEach(counter => {
+  const update = () => {
+    const target = +counter.getAttribute('data-target');
+    const count = +counter.innerText;
+    const increment = target / 100;
+    if (count < target) {
+      counter.innerText = Math.ceil(count + increment);
+      setTimeout(update, 20);
+    } else {
+      counter.innerText = target.toLocaleString();
+    }
   };
   update();
 });
 
+// Load on page start
+document.addEventListener("DOMContentLoaded", loadLeaderboardFromSheet);
 </script>
 
 </body>
