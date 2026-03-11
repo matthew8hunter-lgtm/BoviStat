@@ -249,8 +249,8 @@ function renderLeaderboardTable(rows) {
       <td>${r.exhibitor ?? ""}</td>
       <td>${r.region ?? ""}</td>
       <td>${r.breed ?? ""}</td>
+     <td><span class="badge">${r.animal ?? ""}</span></td>
       <td>${pointsNum.toLocaleString()}</td>
-      <td><span class="badge">${r.titles ?? ""}</span></td>
       <td style="color:${changeVal >= 0 ? "#4caf50" : "#f44336"};">
         ${changeVal >= 0 ? "▲" : "▼"} ${Math.abs(changeVal)}
       </td>
@@ -285,7 +285,7 @@ function renderPodium(rows) {
       <h3>${medals[i]} #${r.rank} ${r.exhibitor}</h3>
       <p>${r.breed} • ${r.region}</p>
       <p><strong>${safeNumber(r.points).toLocaleString()} Points</strong></p>
-      <span class="badge">${r.titles ?? ""}</span>
+      <span class="badge">${r.animal ?? ""}</span>
     `;
 
     podium.appendChild(card);
